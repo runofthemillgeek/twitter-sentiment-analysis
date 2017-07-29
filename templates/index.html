@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Tweet Sentiment Analysis</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+	    crossorigin="anonymous"></script>
+	<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/slate/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+	<script src="https://code.highcharts.com/highcharts.js"></script>
+	<script src="{{url_for('static', filename='dark.js')}}"></script>
+	<script src="https://code.highcharts.com/modules/exporting.js"></script>
+	<style>
+		.highcharts-background,
+		.highcharts-area {
+			background-color: #272b30 !important;
+		}
+
+		#container {
+			margin: 20px auto !important;
+		}
+	</style>
+</head>
+
+<body>
+	<div class='container-fluid'>
+		<div class="row">
+			<div class='text-center col-xs-12'>
+				<h1>Tweet Sentiment Analysis</h1>
+				<h5>Search for Tweets and download the data labeled with it's Polarity in CSV format</h5>
+
+				<div id="search_box">
+					<input type="text" id="query">
+					<input type="text" id="tweetcount">
+					<button id="search" class="btn btn-primary">Search</button>
+					<button id="getcsv" class="btn btn-primary">Download CSV</button>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div id="loading" class="text-center">Loading...</div>			
+			<div class="col-sm-6">
+				<div id="container" style="height: 400px; max-width: 600px; margin: 0 auto"></div>				
+			</div>
+			<div class="col-sm-6">
+				<div id="container-vader" style="height: 400px; max-width: 600px; margin: 0 auto"></div>
+			</div>
+			<div class="col-sm-12" id="tweets-container">
+				<div class="row text-center">
+					<div class="col-sm-6">
+						<h2>TextBlob</h2>
+					</div>
+					<div class="col-sm-6">
+						<h2>NLTK</h2>
+					</div>
+				</div>
+				<div class="row" id="tweets">
+				</div>
+			</div>			
+		</div>
+		<footer class="row text-center">
+			Made by Aadithyavarma, Amol, Sangeeth
+		</footer>
+	</div>
+	<script type="text/javascript">
+		var current_data;
+		var chart = {};
+
+		function sentiment_to_color(sentiment) {
+			if (sentiment == 'positive') return 'panel-success';
+			else if (sentiment == 'negative') return 'panel-danger';
+			else return 'panel-primary';
+		}
+
+		function load_tweets(querystring, tweetcount) {
+			$("#container, #container-vader").hide();
+			$.ajax({
+				url: 'tweets',
+				data: {
+					'query': querystring,
+					'retweets_only': 'false',
+					'with_sentiment': 'true',
+					'tweetcount': tweetcount
+				},
+				dataType: 'json',
+				type: 'GET',
+				success: function (data) {
+					$("#container, #container-vader").show();					
+					buildChart(data, data['count']);
+					current_data = data['data'];
+					var tweets = data['data'];
+					var container = $('#tweets');
+					var contents = '';
+
+					for (i = 0; i < tweets.length; i++) {
+						contents += '<div class="col-sm-6">';
+						contents += '<div class="panel ' + sentiment_to_color(tweets[i].sentiment) +
+							'"> <div class="panel-heading"> <h3 class="panel-title">' + tweets[i].user +
+							'</h3> </div> <div class="panel-body"><blockquote>' + tweets[i].text + '</blockquote> </div> </div>'
+						contents += '</div>';
+
+						contents += '<div class="col-sm-6">';						
+						contents += '<div class="panel ' + sentiment_to_color(tweets[i].sentiment_vader) +
+						'"> <div class="panel-heading"> <h3 class="panel-title">' + tweets[i].user +
+						'</h3> </div> <div class="panel-body"><blockquote>' + tweets[i].text + '</blockquote> </div> </div>'
+						contents += '</div>';
+						
+						// contents += '<li class="list-group-item '+ sentiment_to_color(tweets[i].sentiment) +'">'+ tweets[i].user + ": " + tweets[i].text + '</li>';
+					}
+
+					container.html(contents);
+					$('#query').val(querystring);
+					$('#tweetcount').val(tweetcount)
+					$('#loading').html(data['count'] + " Tweets loaded about " + querystring + ".");
+				}
+			});
+		}
+
+		function get_csv(json) {
+			var fields = Object.keys(json[0]);
+			var csv = json.map(function (row) {
+				return fields.map(function (fieldName) {
+					return JSON.stringify(row[fieldName] || '');
+				});
+			});
+			csv.unshift(fields);
+			console.log(csv);
+			return csv.join('\r\n');
+		}
+
+		function download(filename, text) {
+			var element = document.createElement('a');
+			element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+			element.setAttribute('download', filename);
+
+			element.style.display = 'none';
+			document.body.appendChild(element);
+
+			element.click();
+
+			document.body.removeChild(element);
+		}
+
+		$(document).ready(function () {
+			load_tweets('Donald Trump', 100);
+		});
+
+		$('#search').click(function () {
+			$('#loading').html('Loading...');
+			$('#tweets').html('');
+			load_tweets($('#query').val(), $('#tweetcount').val());
+		});
+
+		$('#getcsv').click(function () {
+			download('data.csv', get_csv(current_data));
+		});
+
+		function buildChart(data, tweetcount) {
+			var options = {
+				chart: {
+					backgroundColor: "#272b30",
+					plotBackgroundColor: "#272b30",
+					plotBorderWidth: null,
+					plotShadow: false,
+					type: 'pie'
+				},
+				title: {
+					text: `last ${tweetcount} tweets on ` + $('#query').val()
+				},
+				tooltip: {
+					pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+				},
+				plotOptions: {
+					pie: {
+						allowPointSelect: true,
+						cursor: 'pointer',
+						dataLabels: {
+							enabled: true,
+							format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+						}
+					}
+				},
+				series: getPercentage(data)
+			};
+			console.log(data);
+			chart.a = Highcharts.chart('container', options);
+			options.series = getPercentage(data, 'sentiment_vader');
+			chart.b = Highcharts.chart('container-vader', options);
+		};
+
+		function getNegativePercentage(data, key) {
+			key = key || 'sentiment';
+			var current_data = data['data'];
+			var counter = 0;
+			for (var i = current_data.length - 1; i >= 0; i--) {
+				if (current_data[i][key] == 'negative')
+					counter++;
+			}
+			console.log('negative', counter)
+
+			return counter / data.count;
+		}
+
+		function getPositivePercentage(data, key) {
+			key = key || 'sentiment';			
+			var current_data = data['data'];
+			var counter = 0;
+			for (var i = current_data.length - 1; i >= 0; i--) {
+				if (current_data[i][key] == 'positive')
+					counter++;
+			}
+			console.log('positive', counter)
+
+			return counter / data.count;
+		}
+
+		function getNeutralPercentage(data, key) {
+			key = key || 'sentiment';						
+			var current_data = data['data'];
+			var counter = 0;
+			for (var i = current_data.length - 1; i >= 0; i--) {
+				if (current_data[i][key] == 'neutral')
+					counter++;
+			}
+			console.log('neutral', counter)
+			return counter / data.count;
+		}
+
+		function getPercentage(data, key) {
+			key = key || 'sentiment';						
+			var neutral = getNeutralPercentage(data, key);
+			var positive = getPositivePercentage(data, key);
+			var negative = getNegativePercentage(data, key);
+
+			return [{
+				name: 'Tweets',
+				//colorByPoint: true,
+				data: [{
+					name: 'Positive',
+					y: positive,
+					color: "#2E7D32"					
+				}, {
+					name: 'Negative',
+					y: negative,
+					sliced: true,
+					selected: true,
+					color: "#B71C1C"					
+				}, {
+					name: 'Neutral',
+					y: neutral,
+					color: "#7a8288"
+				}]
+			}]
+			// body...
+		}
+	</script>
+</body>
+
+</html>
