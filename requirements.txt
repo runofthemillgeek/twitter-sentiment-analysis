@@ -1,10 +1,10 @@
 appdirs==1.4.3
-click==6.6
-Flask==0.11.1
+click==6.7
+Flask==0.12.2
 itsdangerous==0.24
-Jinja2==2.8
+Jinja2==2.9.6
 langdetect==1.0.7
-MarkupSafe==0.23
+MarkupSafe==1.0
 nltk==3.2.1
 oauthlib==2.0.0
 packaging==16.8
@@ -14,4 +14,4 @@ requests-oauthlib==0.7.0
 six==1.10.0
 textblob==0.11.1
 tweepy==3.5.0
-Werkzeug==0.11.11
+Werkzeug==0.12.2

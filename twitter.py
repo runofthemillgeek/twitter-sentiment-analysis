@@ -11,13 +11,13 @@ class TwitterClient(object):
     Generic Twitter Class for the App
     '''
 
-    def __init__(self, query, retweets_only=False, with_sentiment=False):
+    def __init__(self, query, retweets_only=False, with_sentiment=False, **kwargs):
         self.sia = SentimentIntensityAnalyzer()
         # keys and tokens from the Twitter Dev Console
-        consumer_key = '<CONSUMER_KEY>'
-        consumer_secret = '<CONSUMER_SECRET>'
-        access_token = '<ACCESS_TOKEN>'
-        access_token_secret = '<ACCESS_TOKEN>'
+        consumer_key = kwargs["consumer_key"]
+        consumer_secret = kwargs["consumer_secret"]
+        access_token = kwargs["access_token"]
+        access_token_secret = kwargs["access_token_secret"]
         # Attempt authentication
         try:
             self.auth = OAuthHandler(consumer_key, consumer_secret)

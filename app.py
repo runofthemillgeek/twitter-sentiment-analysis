@@ -1,15 +1,18 @@
 import os
 from flask import Flask, request, render_template, jsonify
 from twitter import TwitterClient
-
-app = Flask(__name__)
-# Setup the client <query string, retweets_only bool, with_sentiment bool>
-api = TwitterClient('Donald Trump')
-
+import json
 
 def strtobool(v):
     return v.lower() in ["yes", "true", "t", "1"]
 
+def parse_env_json():
+    with open(".env.json") as f:
+        return json.load(f)
+
+app = Flask(__name__)
+# Setup the client <query string, retweets_only bool, with_sentiment bool>
+api = TwitterClient('Donald Trump', **parse_env_json())
 
 @app.route('/')
 def index():
