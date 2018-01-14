@@ -34,3 +34,13 @@ Replace the placeholder values with the keys you obtained from Twitter and save 
 1. Sangeeth Sudheer
 2. Amol Suraj Mishra
 3. Aadithyavarma
+
+## Screenshots
+
+![](https://i.imgur.com/dqlkcCP.png)
+
+![](https://i.imgur.com/c25PJaW.png)
+
+![](https://i.imgur.com/dPx8M05.png)
+
+![](https://i.imgur.com/jcL2Nyb.png)
